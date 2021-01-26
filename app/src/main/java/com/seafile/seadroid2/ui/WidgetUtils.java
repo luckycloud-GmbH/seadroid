@@ -161,7 +161,7 @@ public class WidgetUtils {
             final File file = browserActivity.getDataManager().getLocalRepoFile(repoName, repoID, fullPath);
             Uri uri = null;
             if (android.os.Build.VERSION.SDK_INT > 23) {
-                uri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+                uri = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName(), file);
             } else {
                 uri = Uri.fromFile(file);
             }
@@ -218,7 +218,7 @@ public class WidgetUtils {
         open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         if (android.os.Build.VERSION.SDK_INT > 23) {
-            Uri photoURI = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName() + ".provider", file);
+            Uri photoURI = FileProvider.getUriForFile(activity, activity.getApplicationContext().getPackageName(), file);
             open.setDataAndType(photoURI, mime);
             open.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         } else {
@@ -246,6 +246,15 @@ public class WidgetUtils {
         intent.putExtra("path", path);
         intent.putExtra("dirID", dirID);
         context.startActivity(intent);
+    }
+
+    public static void showStarredRepo(Activity activity, String repoID, String repoName, String path, String dirID) {
+        Intent intent = new Intent(activity, BrowserActivity.class);
+        intent.putExtra("repoID", repoID);
+        intent.putExtra("repoName", repoName);
+        intent.putExtra("path", path);
+        intent.putExtra("dirID", dirID);
+        activity.startActivityForResult(intent, 0);
     }
 
     public static void startMarkdownActivity(Context context, String path) {

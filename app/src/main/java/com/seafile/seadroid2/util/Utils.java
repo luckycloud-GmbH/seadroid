@@ -21,6 +21,7 @@ import android.net.http.SslCertificate;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
@@ -292,6 +293,9 @@ public class Utils {
         if (i != null)
             return i;
 
+        if (suffix.equals("flv")) {
+            return R.drawable.file_video;
+        }
         String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(suffix);
         return getResIdforMimetype(mime);
     }
@@ -316,6 +320,9 @@ public class Utils {
         String suffix = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
         if (TextUtils.isEmpty(suffix))
             return false;
+        if (suffix.equals("flv")) {
+            return true;
+        }
         String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(suffix);
         if (mime == null)
             return false;
@@ -746,10 +753,13 @@ public class Utils {
     public static boolean isTextMimeType(String fileName) {
         String suffix = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
         //file is markdown or  txt
-        if ("md".equals(suffix) || "markdown".equals(suffix) || "txt".equals(suffix)) {
-            return true;
-        }
-        return false;
+        String[] array = {"ac", "am", "bat", "c", "cc", "cmake", "conf", "cpp", "cs", "css", "csv", "diff",
+                "el", "go", "groovy", "h", "htm", "html", "java", "js", "json", "less", "log", "make",
+                "markdown", "md", "org", "patch", "pde", "php", "pl", "properties", "py", "rb", "rst",
+                "sc", "scala", "scd", "schelp", "script", "sh", "sql", "text", "tex", "txt", "vi", "vim",
+                "xhtml", "xml", "yml"};
+        boolean flag = Arrays.asList(array).contains(suffix);
+        return flag;
     }
 
     private static long lastClickTime;
@@ -945,4 +955,39 @@ public class Utils {
         }
         return "";
     }
+
+    public static String getRealPathFromURI(Context context, Uri contentUri, String mediaId) {
+        Cursor cursor = null;
+        try {
+            if (MediaStore.Images.Media._ID.equals(mediaId)) {//image
+                String[] proj = {MediaStore.Images.Media.DATA};
+                cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                cursor.moveToFirst();
+                return cursor.getString(column_index);
+            } else {//Video
+                String[] proj = {MediaStore.Video.Media.DATA};
+                cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
+                cursor.moveToFirst();
+                return cursor.getString(column_index);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
+
+    public static void utilsLogInfo(boolean b, String info) {
+        if (b) {
+//            Log.d(DEBUG_TAG, info);
+            SeafileLog.d(DEBUG_TAG, info);
+        }
+    }
 }
+

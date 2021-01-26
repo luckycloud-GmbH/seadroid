@@ -1154,7 +1154,7 @@ public class BrowserActivity extends BaseActivity
 
             Uri photo = null;
             if (android.os.Build.VERSION.SDK_INT > 23) {
-                photo = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", takeCameraPhotoTempFile);
+                photo = FileProvider.getUriForFile(this, getApplicationContext().getPackageName(), takeCameraPhotoTempFile);
             } else {
                 photo = Uri.fromFile(takeCameraPhotoTempFile);
             }
@@ -1828,6 +1828,7 @@ public class BrowserActivity extends BaseActivity
                         getActionBarToolbar().setTitle(parentPath.substring(parentPath.lastIndexOf(ACTIONBAR_PARENT_PATH) + 1));
                     }
                 }
+                getReposFragment().clearAdapterData();
                 getReposFragment().refreshView(true);
 
             } else
@@ -1868,7 +1869,7 @@ public class BrowserActivity extends BaseActivity
         final File file = dataManager.getLocalRepoFile(repoName, repoID, path);
         Uri uri = null;
         if (android.os.Build.VERSION.SDK_INT > 23) {
-            uri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", file);
+            uri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() , file);
         } else {
             uri = Uri.fromFile(file);
         }
