@@ -1,19 +1,27 @@
 package com.seafile.seadroid2.cameraupload;
 
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
-import android.content.Context;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.seafile.seadroid2.R;
+import com.seafile.seadroid2.SeadroidApplication;
 import com.seafile.seadroid2.SettingsManager;
-import com.seafile.seadroid2.cameraupload.GalleryBucketUtils;
+import com.seafile.seadroid2.util.GlideApp;
+import com.seafile.seadroid2.util.Utils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,35 +31,52 @@ import java.util.List;
 public class BucketsSelectionFragment extends Fragment {
 
     private List<GalleryBucketUtils.Bucket> buckets;
-    private Bitmap[] thumbnails;
     private boolean[] selectedBuckets;
     private ImageAdapter imageAdapter;
+    private Bitmap[] thumbnails;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View rootView = getActivity().getLayoutInflater().inflate(R.layout.cuc_bucket_selection_layout, null);
-        buckets = GalleryBucketUtils.getMediaBuckets(getActivity().getApplicationContext());
-
         SettingsManager settingsManager = SettingsManager.instance();
         List<String> currentBucketList = settingsManager.getCameraUploadBucketList();
-
-        thumbnails = new Bitmap[buckets.size()];
+        buckets = GalleryBucketUtils.getMediaBuckets(getActivity().getApplicationContext());
         selectedBuckets = new boolean[buckets.size()];
-        for (int i = 0; i < buckets.size(); i++) {
-            GalleryBucketUtils.Bucket b = buckets.get(i);
-            if (b.image_id > 0) {
-                thumbnails[i] = MediaStore.Images.Thumbnails.getThumbnail(
-                        getActivity().getApplicationContext().getContentResolver(), b.image_id,
-                        MediaStore.Images.Thumbnails.MINI_KIND, null);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            thumbnails = new Bitmap[buckets.size()];
+            for (int i = 0; i < buckets.size(); i++) {
+                GalleryBucketUtils.Bucket b = buckets.get(i);
+                if (b.image_id > 0) {
+                    thumbnails[i] = MediaStore.Images.Thumbnails.getThumbnail(
+                            getActivity().getApplicationContext().getContentResolver(), b.image_id,
+                            MediaStore.Images.Thumbnails.MINI_KIND, null);
+                }
+                if (currentBucketList.size() > 0)
+                    selectedBuckets[i] = currentBucketList.contains(b.id);
+                else
+                    selectedBuckets[i] = b.isCameraBucket;
             }
+        } else {
+            for (int i = 0; i < this.buckets.size(); i++) {
+                GalleryBucketUtils.Bucket b = this.buckets.get(i);
+                if (b.isImages != null && b.isImages.equals(GalleryBucketUtils.IMAGES)) {
+                    Uri image_uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, b.imageId);
+                    String image_path = Utils.getRealPathFromURI(SeadroidApplication.getAppContext(), image_uri, "images");
+                    b.imagePath = image_path;
+                } else {
+                    Uri video_uri = Uri.withAppendedPath(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, b.videoId);
+                    String videoPath = Utils.getRealPathFromURI(SeadroidApplication.getAppContext(), video_uri, "video");
+                    b.videoPath = videoPath;
+                }
 
-            // if the user has previously selected buckets, mark these.
-            // otherwise, select the ones that will be auto-guessed.
-            if (currentBucketList.size() > 0)
-                selectedBuckets[i] = currentBucketList.contains(b.id);
-            else
-                selectedBuckets[i] = b.isCameraBucket;
+                // if the user has previously selected buckets, mark these.
+                // otherwise, select the ones that will be auto-guessed.
+                if (currentBucketList.size() > 0)
+                    selectedBuckets[i] = currentBucketList.contains(b.id);
+                else
+                    selectedBuckets[i] = b.isCameraBucket;
+            }
         }
 
         GridView imagegrid = (GridView) rootView.findViewById(R.id.cuc_bucket_selection_grid);
@@ -125,16 +150,24 @@ public class BucketsSelectionFragment extends Fragment {
                     int id = v.getId();
                     selectedBuckets[id] = !selectedBuckets[id];
                     if (selectedBuckets[id])
-                        holder.marking.setVisibility(View.VISIBLE);
+                        holder.marking.setBackgroundResource(R.drawable.checkbox_checked);
                     else
-                        holder.marking.setVisibility(View.INVISIBLE);
+                        holder.marking.setBackgroundResource(R.drawable.checkbox_unchecked);
                 }
             });
-            holder.imageview.setImageBitmap(thumbnails[position]);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                holder.imageview.setImageBitmap(thumbnails[position]);
+            } else {
+                if (buckets.get(position).isImages != null && buckets.get(position).isImages.equals(GalleryBucketUtils.IMAGES)) {
+                    GlideApp.with(getActivity()).load(buckets.get(position).imagePath).into(holder.imageview);
+                } else {
+                    GlideApp.with(getActivity()).load(Uri.fromFile(new File(buckets.get(position).videoPath))).into(holder.imageview);
+                }
+            }
             if (selectedBuckets[position])
-                holder.marking.setVisibility(View.VISIBLE);
+                holder.marking.setBackgroundResource(R.drawable.checkbox_checked);
             else
-                holder.marking.setVisibility(View.INVISIBLE);
+                holder.marking.setBackgroundResource(R.drawable.checkbox_unchecked);
             holder.id = position;
             return convertView;
         }

@@ -94,7 +94,11 @@ public abstract class StorageManager implements MediaScannerConnection.OnScanCom
     private Location buildClassicLocation() {
         Location classic = new Location();
         classic.id = -1; // Android IDs start at 0. so "-1" is safe for us
-        classic.mediaPath = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + getContext().getString(R.string.app_name) + "/");
+        File[] externalMediaDirs = SeadroidApplication.getAppContext().getExternalMediaDirs();
+        String rootPath = externalMediaDirs[0].getAbsolutePath();
+//        String rootPath = SeadroidApplication.getAppContext().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath();
+//        classic.mediaPath = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Seafile/");
+        classic.mediaPath = new File(rootPath + "/Seafile/");
         classic.cachePath = new File(classic.mediaPath, "cache");
         fillLocationInfo(classic);
         return classic;
