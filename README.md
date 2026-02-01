@@ -2,7 +2,7 @@
 
 The application has been published onto the market for easy access:
 
-[![Get it on Google Play](https://play.google.com/store/apps/details?id=de.luckycloud.luckycloud&hl=de)
+[![Get it on Google Play](https://play.google.com/intl/en_us/badges/images/badge_new.png)](https://play.google.com/store/apps/details?id=de.luckycloud.luckycloud&hl=de)
 
 ## Build the APK
 
